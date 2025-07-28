@@ -8,7 +8,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import '../styles/globals.css'
 interface FinancialData {
   name: string;
   valor: number;

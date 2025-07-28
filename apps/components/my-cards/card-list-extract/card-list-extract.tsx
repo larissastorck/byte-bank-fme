@@ -17,7 +17,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
-import './card-list-extract.css'
 
 interface Attachment {
   url: string;
