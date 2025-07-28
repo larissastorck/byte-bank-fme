@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useWidgetPreferences } from "../../hooks/use-widget-preferences";
 import { BarChart, ModeStandby } from "@mui/icons-material";
 import {
   Box,
@@ -6,9 +8,6 @@ import {
   Checkbox,
   Typography,
 } from "@mui/material";
-import { useWidgetPreferences } from "../../hooks/use-widget-preferences";
-
-import { useEffect } from "react";
 
 type WidgetSettingsModalProps = {
   open: boolean;
@@ -18,7 +17,7 @@ type WidgetSettingsModalProps = {
 export default function WidgetSettingsModal({
   open,
   onClose,
-}: Readonly<WidgetSettingsModalProps>) {
+}: WidgetSettingsModalProps) {
   const { preferences, togglePreference } = useWidgetPreferences();
 
   // Fechar modal com Esc
@@ -38,38 +37,43 @@ export default function WidgetSettingsModal({
       aria-describedby="widget-modal-description"
     >
       <Box
-        aria-modal="true"
-        className="bg-white p-6 rounded-2xl shadow-md text-gray-800 focus:outline-none overflow-y-auto"
         sx={{
-          width: "100%",
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '100%',
           maxWidth: 480,
-          mx: "auto",
-          mt: "2%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          outline: "none",
-          transition: "all 0.2s ease",
+          maxHeight: '90vh',
+          bgcolor: 'background.paper',
+          boxShadow: 24,
+          p: 4,
+          borderRadius: 2,
+          outline: 'none',
+          overflowY: 'auto'
         }}
       >
-        <Typography
-          id="widget-modal-title"
-          component="h2"
-          variant="h6"
-          fontWeight="bold"
-          marginBottom={2}
-        >
+        <Typography id="widget-modal-title" variant="h6" fontWeight="bold" mb={2}>
           Personalizar Widgets
         </Typography>
-        <p className="text-xs text-gray-700 mb-4">
+        <Typography variant="body2" color="text.secondary" mb={4}>
           Escolha quais widgets deseja exibir no painel
-        </p>
+        </Typography>
+
         {/* CARD: Alerta de Gastos */}
         <Box
-          className={`border rounded-lg p-4 mb-3 transition-all cursor-pointer ${
-            preferences.spendingAlert
-              ? "border-blue-600 bg-[#f8faff]"
-              : "border-gray-300 bg-white"
-          } hover:border-gray-400 shadow-sm`}
+          sx={{
+            border: 1,
+            borderColor: preferences.spendingAlert ? 'primary.main' : 'divider',
+            borderRadius: 1,
+            p: 3,
+            mb: 2,
+            bgcolor: preferences.spendingAlert ? 'primary.light' : 'background.paper',
+            cursor: 'pointer',
+            '&:hover': {
+              borderColor: 'text.secondary'
+            }
+          }}
           onClick={() => togglePreference("spendingAlert")}
           tabIndex={0}
           onKeyDown={(e) =>
@@ -77,78 +81,70 @@ export default function WidgetSettingsModal({
             togglePreference("spendingAlert")
           }
         >
-          <Box className="flex justify-between items-center">
+          <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography fontWeight="bold">Alerta de gastos</Typography>
-
             <FormControlLabel
               control={
                 <Checkbox
                   checked={preferences.spendingAlert}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePreference("spendingAlert");
-                  }}
-                  sx={{
-                    color: "var(--byte-color-dash)",
-                    "&.Mui-checked": { color: "var(--byte-color-dash)" },
-                    transition: "all 0.2s ease",
-                  }}
-                  tabIndex={-1}
+                  onChange={() => togglePreference("spendingAlert")}
+                  onClick={(e) => e.stopPropagation()}
+                  color="primary"
                 />
               }
-              label={""}
+              label=""
             />
           </Box>
 
-          <Typography variant="body2" className="text-gray-600">
+          <Typography variant="body2" color="text.secondary" mt={1}>
             Monitore seus gastos mensais e receba alertas quando se aproximar do
-            limite definido. Ideal para controle de orçamento pessoal.{" "}
+            limite definido.
           </Typography>
 
           <Box
-            className={`border rounded-lg p-4 my-3 border-gray-300 bg-white flex flex-col gap-4`}
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 3,
+              my: 2,
+              bgcolor: 'background.paper'
+            }}
           >
-            <Typography
-              fontWeight="bold"
-              fontSize={14}
-              className="flex gap-2 items-end"
-            >
-              <BarChart />
-              Prévia do widget
-            </Typography>
-
-            <Typography fontSize={12} className="text-gray-600">
-              Visualize seus gastos em tempo real com barras de progresso e
-              notificações quando atingir 80% do limite.
-            </Typography>
-
-            <Box className="flex justify-between">
-              <Typography
-                variant="body2"
-                fontSize={10}
-                className="text-gray-500"
-              >
-                Limite atual:{" "}
-                <span className="font-bold text-gray-900">R$ 2.000</span>
+            <Box display="flex" alignItems="center" gap={1} mb={1}>
+              <BarChart fontSize="small" />
+              <Typography fontWeight="bold" variant="body2">
+                Prévia do widget
               </Typography>
-              <Typography
-                variant="body2"
-                fontSize={10}
-                className="text-gray-500"
-              >
-                Gasto: <span className="font-bold text-red-600">R$ 0</span>
+            </Box>
+            <Typography variant="body2" color="text.secondary" fontSize={14}>
+              Visualize seus gastos em tempo real com barras de progresso.
+            </Typography>
+            <Box display="flex" justifyContent="space-between" mt={2}>
+              <Typography variant="caption" color="text.secondary">
+                Limite atual: <strong>R$ 2.000</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Gasto: <strong color="error">R$ 0</strong>
               </Typography>
             </Box>
           </Box>
         </Box>
-        {/* -------------------------------------------- */}
+
         {/* CARD: Meta de Economia */}
         <Box
-          className={`border rounded-lg p-4 transition-all cursor-pointer ${
-            preferences.savingsGoal
-              ? "border-blue-600 bg-[#f8faff]"
-              : "border-gray-300 bg-white"
-          } hover:border-gray-400 shadow-sm`}
+          sx={{
+            border: 1,
+            borderColor: preferences.savingsGoal ? 'primary.main' : 'divider',
+            borderRadius: 1,
+            p: 3,
+            mb: 2,
+            bgcolor: preferences.savingsGoal ? 'primary.light' : 'background.paper',
+            cursor: 'pointer',
+            '&:hover': {
+              borderColor: 'text.secondary'
+            }
+          }}
           onClick={() => togglePreference("savingsGoal")}
           tabIndex={0}
           onKeyDown={(e) =>
@@ -156,75 +152,66 @@ export default function WidgetSettingsModal({
             togglePreference("savingsGoal")
           }
         >
-          <Box className="flex justify-between items-center">
+          <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography fontWeight="bold">Meta de economia</Typography>
             <FormControlLabel
               control={
                 <Checkbox
                   checked={preferences.savingsGoal}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePreference("savingsGoal");
-                  }}
-                  sx={{
-                    color: "var(--byte-color-dash)",
-                    "&.Mui-checked": { color: "var(--byte-color-dash)" },
-                    transition: "all 0.2s ease",
-                  }}
-                  tabIndex={-1}
+                  onChange={() => togglePreference("savingsGoal")}
+                  onClick={(e) => e.stopPropagation()}
+                  color="primary"
                 />
               }
-              label={""}
+              label=""
             />
           </Box>
-          <Typography variant="body2" className="text-gray-600">
-            Defina metas de economia e acompanhe seu progresso com visualizações
-            motivacionais. Perfeito para alcançar objetivos financeiros.
+
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            Defina metas de economia e acompanhe seu progresso.
           </Typography>
 
           <Box
-            className={`border rounded-lg p-4 my-3 border-gray-300 bg-white flex flex-col gap-4`}
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 3,
+              my: 2,
+              bgcolor: 'background.paper'
+            }}
           >
-            <Typography
-              fontWeight="bold"
-              fontSize={14}
-              className="flex gap-2 items-end"
-            >
+            <Box display="flex" alignItems="center" gap={1} mb={1}>
               <ModeStandby fontSize="small" />
-              Prévia do widget
-            </Typography>
-
-            <Typography fontSize={12} className="text-gray-600">
-              Acompanhe o progresso das suas metas com barra de progresso
-              animadas e celebre cada conquista alcançada.
-            </Typography>
-
-            <Box className="flex justify-between">
-              <Typography
-                variant="body2"
-                fontSize={10}
-                className="text-gray-500"
-              >
-                Meta atual:{" "}
-                <span className="font-bold text-gray-900">R$ 3.000</span>
+              <Typography fontWeight="bold" variant="body2">
+                Prévia do widget
               </Typography>
-              <Typography
-                variant="body2"
-                fontSize={10}
-                className="text-gray-500"
-              >
-                Economizado:{" "}
-                <span className="font-bold text-green-600">R$ 0</span>
+            </Box>
+            <Typography variant="body2" color="text.secondary" fontSize={14}>
+              Acompanhe o progresso das suas metas.
+            </Typography>
+            <Box display="flex" justifyContent="space-between" mt={2}>
+              <Typography variant="caption" color="text.secondary">
+                Meta atual: <strong>R$ 3.000</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Economizado: <strong color="success">R$ 0</strong>
               </Typography>
             </Box>
           </Box>
         </Box>
-        {/* -------------------------------------------- */}
-        <Box className="mt-4 flex justify-end">
+
+        <Box display="flex" justifyContent="flex-end" mt={3}>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-white rounded cursor-pointer"
-            style={{ backgroundColor: "var(--byte-color-dash)" }}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'var(--byte-color-dash)',
+              color: 'white',
+              borderRadius: '4px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
           >
             Fechar
           </button>

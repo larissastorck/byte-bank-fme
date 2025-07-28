@@ -1,0 +1,59 @@
+{
+  "user": {
+    "name": "Joana da Silva Oliveira"
+  },
+  "balance": {
+    "account": "Conta Corrente",
+    "value": 0
+  },
+  "transactions": [
+    {
+      "_id": 1,
+      "month": "Novembro",
+      "tipo": "Depósito",
+      "date": "18/11/2022",
+      "valor": 150,
+      "createdAt": "",
+      "updatedAt": ""
+    },
+    {
+      "_id": 2,
+      "month": "Novembro",
+      "tipo": "Depósito",
+      "date": "21/11/2022",
+      "valor": 100,
+      "createdAt": "",
+      "updatedAt": ""
+    },
+    {
+      "_id": 3,
+      "month": "Novembro",
+      "tipo": "Depósito",
+      "date": "21/11/2022",
+      "valor": 50,
+      "createdAt": "",
+      "updatedAt": ""
+    },
+    {
+      "_id": 4,
+      "month": "Novembro",
+      "tipo": "Transferência",
+      "date": "21/11/2022",
+      "valor": -500,
+      "createdAt": "",
+      "updatedAt": ""
+    }
+  ],
+  "investments": [
+    {
+      "id": 1,
+      "label": "Renda Fixa",
+      "value": 36000
+    },
+    {
+      "id": 2,
+      "label": "Renda Variável",
+      "value": 14000
+    }
+  ]
+}

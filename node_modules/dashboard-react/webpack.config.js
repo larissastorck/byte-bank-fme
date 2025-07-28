@@ -4,6 +4,7 @@ const ModuleFederationPlugin = require('webpack').container.ModuleFederationPlug
 module.exports = {
   entry: './src/index.tsx',
   mode: 'development',
+  devtool: 'source-map',
   devServer: {
     port: 3003,
     historyApiFallback: true,

@@ -1,10 +1,7 @@
-"use client";
-import { Box } from "@mui/material";
+import React from "react";
 import { SpendingAlertProps } from "../../interfaces/dashboard";
 
-function calculateTotalExpenses(
-  transactions: SpendingAlertProps["transactions"]
-): number {
+function calculateTotalExpenses(transactions: SpendingAlertProps["transactions"]): number {
   return transactions
     .filter(tx => tx.tipo === "saida")
     .reduce((total, tx) => total + tx.valor, 0);
@@ -18,41 +15,39 @@ export default function SpendingAlertWidget({
   const alert = gastos > limit;
 
   return (
-    <Box
-      component="section"                 /* região identificável */
+    <section
       aria-labelledby="spending-alert-heading"
-      className="p-4 rounded-2xl shadow-md bg-white text-gray-900"
-      style={{ border: "2px solid var(--byte-color-dash)" }}
+      className="p-4 rounded-2xl shadow-md bg-white text-gray-900 border-2"
+      style={{ borderColor: "var(--byte-color-dash)" }}
     >
       <h3 id="spending-alert-heading" className="text-lg font-semibold">
         Alerta de Gastos
       </h3>
 
-      <p>
+      <p className="mt-2">
         Limite mensal:
-        {/* rótulo lido corretamente por leitores de tela */}
         <span aria-label={`Limite de R$ ${limit}`}> R$ {limit}</span>
       </p>
 
-      <p>
+      <p className="mt-1">
         Total gasto:
         <span aria-label={`Total gasto R$ ${gastos}`}> R$ {gastos}</span>
       </p>
 
       {alert ? (
-        <p
-          className="text-red-600 font-bold mt-2"
-          role="alert"                  /* avisado imediatamente */
+        <div
+          className="text-red-600 font-bold mt-2 flex items-center"
+          role="alert"
           aria-live="assertive"
         >
-          <span role="img" aria-label="Alerta">⚠</span>{" "}
+          <span role="img" aria-label="Alerta" className="mr-1">⚠</span>
           Você ultrapassou o limite!
-        </p>
+        </div>
       ) : (
         <p className="text-green-600 font-semibold mt-2" aria-live="polite">
           Gastos dentro do limite
         </p>
       )}
-    </Box>
+    </section>
   );
 }
