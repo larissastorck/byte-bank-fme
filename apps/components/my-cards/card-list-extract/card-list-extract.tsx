@@ -3,19 +3,16 @@ import {
   Box,
   Button,
   IconButton,
-  Input,
   TextField,
-  MenuItem,
-  Checkbox,
   Typography,
-  Select,
-  Link,
   Chip,
-  Tooltip
+  Tooltip,
+  Checkbox,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 
 interface Attachment {
@@ -39,59 +36,33 @@ interface TxWithFiles extends Transaction {
 interface CardListExtractProps {
   transactions: Transaction[];
   fetchPage: () => void;
-  hasMore: boolean;
   isPageLoading: boolean;
   onSave?: (transactions: Transaction[]) => void;
   onDelete: (transactionIds: number[]) => Promise<void>;
-  atualizaSaldo: () => void;
 }
 
-// Utility functions
-const formatBRL = (value: number | string): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
-
-const formatTipo = (tipo: string): string => {
-  const types: Record<string, string> = {
-    cambio: "Câmbio",
-    deposito: "Depósito",
-    transferencia: "Transferência"
-  };
-  return types[tipo] || tipo;
-};
-
-const maskCurrency = (value: string): string => {
-  let v = value.replace(/\D/g, '');
-  v = (Number(v) / 100).toFixed(2) + '';
-  v = v.replace('.', ',');
-  v = v.replace(/(\d)(\d{3})(\d{3}),/g, '$1.$2.$3,');
-  v = v.replace(/(\d)(\d{3}),/g, '$1.$2,');
-  return v;
-};
-
 const parseBRL = (value: string): number => {
-  const parsed = value.replace(/\./g, '').replace(',', '.');
+  const parsed = value.replace(/\./g, "").replace(",", ".");
   return parseFloat(parsed) || 0;
+};
+
+const formatBRL = (value: number | string): string => {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) return "R$ 0,00";
+  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
 const formatDateBR = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('pt-BR');
-};
-
-const parseDateBR = (dateString: string): string => {
-  const [day, month, year] = dateString.split('/');
-  return `${year}-${month}-${day}`;
+  return date.toLocaleDateString("pt-BR");
 };
 
 const CardListExtract: React.FC<CardListExtractProps> = ({
   transactions,
   fetchPage,
-  hasMore,
   isPageLoading,
+  onSave,
   onDelete,
-  atualizaSaldo,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableTransactions, setEditableTransactions] = useState<TxWithFiles[]>([]);
@@ -105,18 +76,19 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
   const [endDate, setEndDate] = useState("");
   const [dateError, setDateError] = useState(false);
 
-  const isValidDate = (v: string) => v === "" || !Number.isNaN(Date.parse(v));
-
   useEffect(() => {
     if (transactions) {
       setEditableTransactions(
         transactions.map((tx) => ({
           ...tx,
           valor: typeof tx.valor === "string" ? parseFloat(tx.valor) : tx.valor,
+          anexos: Array.isArray(tx.anexos) ? tx.anexos : [], // garante array
         }))
       );
     }
   }, [transactions]);
+
+  const isValidDate = (v: string) => v === "" || !Number.isNaN(Date.parse(v));
 
   const filteredTransactions = useMemo(() => {
     const tiposEntrada = ["cambio", "deposito"];
@@ -134,7 +106,6 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
   }, [editableTransactions, typeFilter, startDate, endDate]);
 
   const handleEditClick = () => {
-    setEditableTransactions((p) => p.map((tx) => ({ ...tx, updatedAt: formatDateBR(tx.updatedAt) })));
     setIsEditing(true);
     setTimeout(() => firstEditRef.current?.focus());
   };
@@ -170,8 +141,8 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
   };
 
   const handleAttachFiles = (transactionId: number, files: File[]) => {
-    setEditableTransactions(currentTxs =>
-      currentTxs.map(tx =>
+    setEditableTransactions((currentTxs) =>
+      currentTxs.map((tx) =>
         tx._id === transactionId ? { ...tx, novosAnexos: files } : tx
       )
     );
@@ -184,29 +155,29 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
   ) => {
     if (!isNew) {
       try {
-        const fileName = attachmentIdentifier.substring(attachmentIdentifier.lastIndexOf('/') + 1);
+        const fileName = attachmentIdentifier.substring(attachmentIdentifier.lastIndexOf("/") + 1);
         const response = await fetch(`/api/anexos/${encodeURIComponent(fileName)}`, {
-          method: 'DELETE',
+          method: "DELETE",
         });
 
         if (response.status !== 204 && response.status !== 200) {
-          const errorData = await response.json() as { message?: string };
-          alert(`Erro ao remover anexo: ${errorData.message ?? 'Erro desconhecido'}`);
+          const errorData = (await response.json()) as { message?: string };
+          alert(`Erro ao remover anexo: ${errorData.message ?? "Erro desconhecido"}`);
           return;
         }
       } catch {
-        alert('Erro de rede ao tentar remover o anexo.');
+        alert("Erro de rede ao tentar remover o anexo.");
         return;
       }
     }
 
-    setEditableTransactions(currentTxs =>
-      currentTxs.map(tx => {
+    setEditableTransactions((currentTxs) =>
+      currentTxs.map((tx) => {
         if (tx._id !== transactionId) return tx;
         if (isNew) {
-          return { ...tx, novosAnexos: tx.novosAnexos?.filter(f => f.name !== attachmentIdentifier) };
+          return { ...tx, novosAnexos: tx.novosAnexos?.filter((f) => f.name !== attachmentIdentifier) };
         } else {
-          return { ...tx, anexos: tx.anexos?.filter(a => a.url !== attachmentIdentifier) };
+          return { ...tx, anexos: tx.anexos?.filter((a) => a.url !== attachmentIdentifier) };
         }
       })
     );
@@ -214,34 +185,17 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
 
   const handleSaveOrDeleteClick = async () => {
     if (isEditing) {
-      for (const tx of editableTransactions) {
-        if (tx.novosAnexos?.length) {
-          const fd = new FormData();
-          fd.append("tipo", tx.tipo);
-          fd.append("valor", tx.valor.toString());
-          fd.append("updatedAt", parseDateBR(tx.updatedAt));
-          tx.novosAnexos.forEach((f) => fd.append("anexos", f));
-          await fetch(`/api/transacao/${tx._id}`, { method: "PUT", body: fd });
-        } else {
-          await fetch(`/api/transacao/${tx._id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              tipo: tx.tipo,
-              valor: tx.valor,
-              updatedAt:
-                typeof tx.updatedAt === "string" &&
-                /^\d{2}\/\d{2}\/\d{4}$/.test(tx.updatedAt)
-                  ? parseDateBR(tx.updatedAt)
-                  : tx.updatedAt,
-            }),
-          });
-        }
+      if (onSave) {
+        const transactionsToSave = editableTransactions.map((tx) => ({
+          ...tx,
+          valor: typeof tx.valor === "string" ? parseBRL(tx.valor) : tx.valor,
+        }));
+        setStatusMsg("Salvando transações...");
+        await onSave(transactionsToSave);
+        setStatusMsg("Transações salvas!");
       }
-      void fetchPage();
       setIsEditing(false);
-      atualizaSaldo?.();
-      setStatusMsg("Transações salvas!");
+      setTimeout(() => setStatusMsg(""), 4000);
       return;
     }
 
@@ -256,31 +210,43 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
         setIsDeletingInProgress(false);
         setIsDeleting(false);
         setSelectedTransactions([]);
-        atualizaSaldo();
         setTimeout(() => setStatusMsg(""), 4000);
       }
     }
   };
 
-  const handleStartDateChange = (v: string) => { setStartDate(v); setDateError(!isValidDate(v)); };
-  const handleEndDateChange = (v: string) => { setEndDate(v); setDateError(!isValidDate(v)); };
+  const handleStartDateChange = (v: string) => {
+    setStartDate(v);
+    setDateError(!isValidDate(v));
+  };
+  const handleEndDateChange = (v: string) => {
+    setEndDate(v);
+    setDateError(!isValidDate(v));
+  };
 
   const loadingFirstPage = isPageLoading && editableTransactions.length === 0;
   const hasTransactions = !loadingFirstPage && editableTransactions.length > 0;
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      minHeight: '512px', 
-      bgcolor: 'background.paper', 
-      borderRadius: 2, 
-      boxShadow: 1, 
-      p: 3 
-    }} role="region" aria-labelledby="extrato-heading">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography id="extrato-heading" variant="h6" component="h3">Extrato</Typography>
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "512px",
+        bgcolor: "background.paper",
+        borderRadius: 2,
+        boxShadow: 1,
+        p: 3,
+      }}
+      role="region"
+      aria-labelledby="extrato-heading"
+    >
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Typography id="extrato-heading" variant="h6" component="h3">
+          Extrato
+        </Typography>
+
         {hasTransactions && !isEditing && !isDeleting && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <IconButton aria-label="editar" onClick={handleEditClick} size="small">
               <EditIcon fontSize="small" />
             </IconButton>
@@ -289,274 +255,195 @@ const CardListExtract: React.FC<CardListExtractProps> = ({
             </IconButton>
           </Box>
         )}
-      </Box>
-      
-      {hasTransactions && (
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' }, 
-          gap: 2, 
-          pb: 2, 
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexWrap: 'wrap'
-        }}>
-          <Select
-            size="small"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as "all" | "entrada" | "saida")}
-            sx={{ flex: 1, minWidth: { xs: 'calc(50% - 16px)', md: 120 } }}
-          >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="entrada">Entrada</MenuItem>
-            <MenuItem value="saida">Saída</MenuItem>
-          </Select>
-          <TextField
-            label="De"
-            type="date"
-            size="small"
-            value={startDate}
-            onChange={(e) => handleStartDateChange(e.target.value)}
-            error={dateError}
-            helperText={dateError ? "Data inválida" : ""}
-            InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1, minWidth: { xs: 'calc(50% - 16px)', md: 120 } }}
-          />
-          <TextField
-            label="Até"
-            type="date"
-            size="small"
-            value={endDate}
-            onChange={(e) => handleEndDateChange(e.target.value)}
-            error={dateError}
-            helperText={dateError ? "Data inválida" : ""}
-            InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1, minWidth: { xs: 'calc(50% - 16px)', md: 120 } }}
-          />
-        </Box>
-      )}
-      
-      {loadingFirstPage ? (
-        <Box aria-busy="true" aria-label="Carregando">
-          {/* Skeleton loading component would go here */}
-        </Box>
-      ) : dateError || !filteredTransactions.length ? (
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          textAlign: 'center', 
-          gap: 2, 
-          py: 5 
-        }}>
-          {dateError ? (
-            <>
-              <Typography variant="h6" color="error">Data inválida</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Verifique o formato da data inserida.
-              </Typography>
-            </>
-          ) : (
-            <>
-              <ReceiptLongOutlinedIcon sx={{ fontSize: 56, color: 'text.secondary' }} />
-              <Typography variant="h6">Nenhuma transação encontrada</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Ajuste os filtros ou adicione uma nova transação para começar.
-              </Typography>
-            </>
-          )}
-        </Box>
-      ) : (
-        <>
-          <Box component="ul" role="list" aria-busy={isPageLoading} sx={{ listStyle: 'none', p: 0, m: 0, '& > li': { mb: 2 } }}>
-            {filteredTransactions.map((tx, idx) => {
-              const hasExistingAttachment = (tx.anexos?.length ?? 0) > 0 || (tx.novosAnexos?.length ?? 0) > 0;
 
-              return (
-                <Box component="li" key={tx._id ?? `tx-${idx}`}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: { xs: 'column', md: 'row' }, 
-                    alignItems: { md: 'center' }, 
-                    justifyContent: 'space-between', 
-                    p: 1.5, 
-                    bgcolor: 'grey.50', 
-                    borderRadius: 1, 
-                    '&:hover': { bgcolor: 'grey.100' },
-                    gap: isEditing ? 0 : undefined 
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      {isEditing ? (
-                        <Input
-                          disableUnderline
-                          fullWidth
-                          value={formatTipo(tx.tipo)}
-                          onChange={(e) => handleTransactionChange(idx, "tipo", e.target.value)}
-                          inputProps={{ style: { textAlign: 'left' } }}
-                          inputRef={idx === 0 ? firstEditRef : undefined}
-                          sx={{ minWidth: 120 }}
-                        />
+        {(isEditing || isDeleting) && (
+          <Box>
+            <Button variant="outlined" onClick={handleCancelClick} disabled={isDeletingInProgress}>
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveOrDeleteClick}
+              disabled={isDeletingInProgress}
+              sx={{ ml: 2 }}
+            >
+              {isEditing ? "Salvar" : isDeletingInProgress ? "Excluindo..." : "Confirmar"}
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* FILTROS SIMPLES */}
+      <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <Select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as "all" | "entrada" | "saida")}
+          size="small"
+          sx={{ minWidth: 140 }}
+        >
+          <MenuItem value="all">Todos os tipos</MenuItem>
+          <MenuItem value="entrada">Entradas</MenuItem>
+          <MenuItem value="saida">Saídas</MenuItem>
+        </Select>
+
+        <TextField
+          label="Data início"
+          type="date"
+          size="small"
+          value={startDate}
+          onChange={(e) => handleStartDateChange(e.target.value)}
+          error={dateError}
+          sx={{ maxWidth: 150 }}
+          InputLabelProps={{ shrink: true }}
+        />
+
+        <TextField
+          label="Data fim"
+          type="date"
+          size="small"
+          value={endDate}
+          onChange={(e) => handleEndDateChange(e.target.value)}
+          error={dateError}
+          sx={{ maxWidth: 150 }}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Box>
+
+      {/* LISTA DE TRANSAÇÕES */}
+      {loadingFirstPage && <Typography>Carregando transações...</Typography>}
+
+      {!loadingFirstPage && filteredTransactions.length === 0 && (
+        <Typography>Nenhuma transação encontrada.</Typography>
+      )}
+
+      {!loadingFirstPage && filteredTransactions.length > 0 && (
+        <Box>
+          {filteredTransactions.map((tx, index) => (
+            <Box
+              key={tx._id}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 2,
+                gap: 2,
+                borderBottom: "1px solid #ccc",
+                pb: 1,
+              }}
+            >
+              {isDeleting && (
+                <Checkbox
+                  checked={selectedTransactions.includes(tx._id)}
+                  onChange={() => handleCheckboxChange(tx._id)}
+                  inputProps={{ "aria-label": `Selecionar transação ${tx._id}` }}
+                />
+              )}
+
+              <Box sx={{ flexGrow: 1 }}>
+                {isEditing ? (
+                  <>
+                    <TextField
+                      inputRef={index === 0 ? firstEditRef : undefined}
+                      label="Tipo"
+                      value={tx.tipo}
+                      size="small"
+                      onChange={(e) => handleTransactionChange(index, "tipo", e.target.value)}
+                      sx={{ mb: 1, maxWidth: 180 }}
+                    />
+                    <TextField
+                      label="Valor"
+                      value={formatBRL(tx.valor)}
+                      size="small"
+                      onChange={(e) => handleTransactionChange(index, "valor", e.target.value)}
+                      sx={{ mb: 1, maxWidth: 150 }}
+                    />
+
+                    {/* Anexos */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {tx.anexos && tx.anexos.length > 0 ? (
+                        tx.anexos.map((anexo, idx) => (
+                          <Chip
+                            key={idx}
+                            icon={<AttachFileIcon />}
+                            label={anexo.name ?? "Anexo"}
+                            onDelete={() => handleRemoveAttachment(tx._id, anexo.url, false)}
+                            sx={{ cursor: "pointer" }}
+                          />
+                        ))
                       ) : (
-                        <Typography variant="body2" sx={{ minWidth: 120, fontWeight: 'medium' }}>
-                          {formatTipo(tx.tipo)}
+                        <Typography variant="caption" color="text.secondary">
+                          Sem anexos
                         </Typography>
                       )}
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDateBR(tx.createdAt)}
-                      </Typography>
+
+                      {/* Input para anexar arquivos */}
+                      <input
+                        type="file"
+                        multiple
+                        style={{ display: "none" }}
+                        id={`file-input-${tx._id}`}
+                        onChange={(e) => {
+                          if (!e.target.files) return;
+                          handleAttachFiles(tx._id, Array.from(e.target.files));
+                          e.target.value = ""; // limpa o input para o mesmo arquivo poder ser selecionado de novo
+                        }}
+                      />
+                      <label htmlFor={`file-input-${tx._id}`}>
+                        <Button component="span" size="small" variant="outlined">
+                          Anexar
+                        </Button>
+                      </label>
                     </Box>
-                    
-                    {isEditing ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                        <Input
-                          disableUnderline
-                          sx={{ 
-                            flex: 1, 
-                            bgcolor: 'background.paper', 
-                            border: '1px solid', 
-                            borderColor: 'divider', 
-                            borderRadius: 1, 
-                            px: 1.5, 
-                            py: 0.5 
-                          }}
-                          value={formatBRL(tx.valor)}
-                          onChange={(e) => handleTransactionChange(idx, "valor", maskCurrency(e.target.value))}
-                          inputProps={{ inputMode: "decimal", title: "Até 999.999,99" }}
-                        />
-                        <input
-                          hidden
-                          multiple
-                          accept="image/*,application/pdf"
-                          id={`edit-anexos-${tx._id}`}
-                          type="file"
-                          aria-label="Selecionar arquivos para anexar"
-                          disabled={hasExistingAttachment}
-                          onChange={(e) => { 
-                            const files = e.target.files; 
-                            if (files) { 
-                              handleAttachFiles(tx._id, Array.from(files)); 
-                            } 
-                          }}
-                        />
-                        <label htmlFor={`edit-anexos-${tx._id}`}>
-                          <Tooltip title={hasExistingAttachment ? "Remova o anexo atual para adicionar um novo" : "Anexar arquivos"}>
-                            <span>
-                              <IconButton 
-                                component="span" 
-                                size="small" 
-                                color="primary" 
-                                aria-label="Anexar arquivos" 
-                                disabled={hasExistingAttachment}
-                              >
-                                <AttachFileIcon fontSize="inherit" aria-hidden="true" />
-                              </IconButton>
-                            </span>
+                  </>
+                ) : (
+                  <>
+                    <Typography>
+                      <strong>Tipo:</strong> {tx.tipo}
+                    </Typography>
+                    <Typography>
+                      <strong>Valor:</strong> {formatBRL(tx.valor)}
+                    </Typography>
+                    <Typography>
+                      <strong>Data:</strong> {formatDateBR(tx.createdAt)}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
+                      {Array.isArray(tx.anexos) && tx.anexos.length > 0 ? (
+                        tx.anexos.map((anexo, idx) => (
+                          <Tooltip key={idx} title={anexo.name ?? ""}>
+                            <Chip
+                              icon={<AttachFileIcon />}
+                              label={anexo.name ?? "Anexo"}
+                              component="a"
+                              href={anexo.url}
+                              target="_blank"
+                              clickable
+                              size="small"
+                            />
                           </Tooltip>
-                        </label>
-                      </Box>
-                    ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {isDeleting && (
-                          <Checkbox
-                            aria-label={`Selecionar transação ${formatBRL(Math.abs(tx.valor))}`}
-                            checked={selectedTransactions.includes(tx._id)}
-                            onChange={() => handleCheckboxChange(tx._id)}
-                            size="small"
-                            sx={{ mr: 1, color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }}
-                          />
-                        )}
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {tx.valor < 0 && "-"}
-                          {formatBRL(tx.valor)}
+                        ))
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          Sem anexos
                         </Typography>
-                        {tx.anexos?.length ? (
-                          <Tooltip title={`${tx.anexos.length} anexo(s)`}>
-                            <AttachFileIcon sx={{ fontSize: 16, ml: 0.5, color: 'primary.main' }} aria-hidden="true" />
-                          </Tooltip>
-                        ) : null}
-                      </Box>
-                    )}
-                  </Box>
-                  
-                  {(tx.anexos?.length || tx.novosAnexos?.length) ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1, ml: 2 }}>
-                      {tx.anexos?.map((a: Attachment) => (
-                        <Chip
-                          key={a.url}
-                          label={a.name}
-                          size="small"
-                          icon={<AttachFileIcon sx={{ fontSize: 14 }} />}
-                          component={!isEditing ? Link : "div"}
-                          href={!isEditing ? a.url : undefined}
-                          target={!isEditing ? "_blank" : undefined}
-                          clickable={!isEditing}
-                          onDelete={isEditing ? () => { void handleRemoveAttachment(tx._id, a.url, false); } : undefined}
-                          sx={{ 
-                            bgcolor: 'primary.light', 
-                            '&:hover': { bgcolor: 'primary.lighter' } 
-                          }}
-                        />
-                      ))}
-                      {isEditing && tx.novosAnexos?.map((f, i) => (
-                        <Chip
-                          key={i}
-                          label={f.name}
-                          size="small"
-                          color="info"
-                          variant="outlined"
-                          icon={<AttachFileIcon sx={{ fontSize: 14 }} />}
-                          onDelete={() => { void handleRemoveAttachment(tx._id, f.name, true); }}
-                        />
-                      ))}
+                      )}
                     </Box>
-                  ) : null}
-                </Box>
-              );
-            })}
-          </Box>
-          
-          <Box aria-busy={isPageLoading}>
-            {/* Infinite scroll component would go here */}
-          </Box>
-          
-          {isPageLoading && editableTransactions.length > 0 && (
-            {/* Skeleton loading component would go here */}
-          )}
-        </>
-      )}
-      
-      {(isEditing || isDeleting) && (
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', mt: 2 }}>
-          <Button
-            onClick={() => { void handleSaveOrDeleteClick(); }}
-            disabled={isDeleting && (isDeletingInProgress || !selectedTransactions.length)}
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': { bgcolor: 'primary.dark' },
-              '&:disabled': { opacity: 0.5, pointerEvents: 'none' }
-            }}
-          >
-            {isEditing ? "Salvar" : isDeletingInProgress ? "Excluindo..." : "Excluir"}
-          </Button>
-          <Button
-            onClick={isEditing ? handleCancelClick : handleCancelDeleteClick}
-            disabled={isDeleting && isDeletingInProgress}
-            sx={{
-              bgcolor: 'grey.200',
-              color: 'text.primary',
-              '&:hover': { bgcolor: 'grey.300' }
-            }}
-          >
-            Cancelar
-          </Button>
+                  </>
+                )}
+              </Box>
+            </Box>
+          ))}
         </Box>
       )}
-      
-      <Box role="status" aria-live="polite" sx={{ position: 'absolute', left: -9999 }}>
-        {statusMsg}
-      </Box>
+
+      {statusMsg && (
+        <Typography
+          variant="body2"
+          sx={{ mt: 2, fontWeight: "bold", color: "primary.main" }}
+          role="alert"
+          aria-live="polite"
+        >
+          {statusMsg}
+        </Typography>
+      )}
     </Box>
   );
 };

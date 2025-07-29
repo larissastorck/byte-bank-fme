@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useWidgetPreferences } from "../../hooks/use-widget-preferences";
+import { useWidgetPreferences } from "../../dashboard-react/src/hooks/use-widget-preferences";
 import { BarChart, ModeStandby } from "@mui/icons-material";
 import {
   Box,

@@ -53,7 +53,7 @@ module.exports = {
       name: 'dashboard',
       filename: 'remoteEntry.js',
       exposes: {
-        "./Dashboard": "./src/bootstrap.tsx",
+        './Dashboard': './src/pages/dashboard/Dashboard.tsx',
         "./MeusCartoes": "./src/pages/meus-cartoes/MeusCartoes.tsx",
         "./Investimentos": "./src/pages/investimentos/Investimentos.tsx",
         "./OutrosServicos": "./src/pages/outros-servicos/OutrosServicos.tsx",

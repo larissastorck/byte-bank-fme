@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Transaction } from "../interfaces/dashboard"; // ajuste conforme sua pasta
+import { Transaction } from "../../../interfaces/dashboard"; // ajuste conforme sua pasta
 
 const PAGE_SIZE = 10;
 

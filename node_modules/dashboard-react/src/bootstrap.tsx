@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 // <-- importa sua store
 import './index.css';
 import Dashboard from './pages/dashboard/Dashboard';
-import StoreProvider from "../../store/StoreProvider";
+import StoreProvider from "./store/StoreProvider";
 const container = document.getElementById('root');
 if (container) {
   ReactDOM.render(

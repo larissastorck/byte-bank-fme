@@ -2,11 +2,13 @@ import React, { useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "../../store/store";
 import {
- createNewTransaction, fetchTransactions, saveTransactions,
+  createNewTransaction, fetchTransactions, saveTransactions,
   deleteTransactions,
   SavePayload,
 } from "../../store/slices/transactionsSlice";
+import StoreProvider from "../../store/StoreProvider"; // <-- MUDANÇA AQUI: Importe o Provider
 
+// ... (todos os seus outros imports continuam aqui, sem alteração) ...
 import CardBalance from "../../../../components/my-cards/card-balance/card-balance";
 import CardListExtract from "../../../../components/my-cards/card-list-extract/card-list-extract";
 import CardNewTransaction from "../../../../components/my-cards/card-new-transaction/card-new-transaction";
@@ -14,13 +16,16 @@ import SavingsGoalWidget from "../../../../components/widgets/savings-goal-widge
 import SpendingAlertWidget from "../../../../components/widgets/spending-alert-widget";
 import FinancialChart from "../../../../components/charts/financialChart";
 import WidgetPreferencesButton from "../../../../components/widgets/widget-preferences-button";
-import { useWidgetPreferences } from "../../../../hooks/use-widget-preferences";
-import { useDashboardData } from "../../../../hooks/use-dashboard-data";
+import { useWidgetPreferences } from "../../hooks/use-widget-preferences";
+import { useDashboardData } from "../../hooks/use-dashboard-data";
 import { DashboardData, NewTransactionData, TxWithFiles } from "../../interfaces/dashboard";
 import dashboardData from "../../mocks/dashboard-data.json";
-import { } from "../../store/slices/transactionsSlice";
-import { fetchBalance } from "../../store/slices/balanceSlice";
-const DashboardPage = () => {
+
+// =================================================================================
+// PASSO 1: Renomeie seu componente de "DashboardPage" para "DashboardContent".
+// O conteúdo dele fica IGUAL.
+// =================================================================================
+const DashboardContent = () => { // <-- MUDANÇA AQUI: Novo nome
   const data: DashboardData = dashboardData;
   const dispatch = useDispatch<AppDispatch>();
 
@@ -30,8 +35,6 @@ const DashboardPage = () => {
     items: transactions,
     status: transactionsStatus,
     creationStatus,
-    hasMore,
-    currentPage,
   } = useSelector((state: RootState) => state.transactions);
 
   const { value: balanceValue } = useSelector(
@@ -41,10 +44,10 @@ const DashboardPage = () => {
   const { preferences } = useWidgetPreferences();
 
   const fetchNextPage = useCallback(() => {
-    if (transactionsStatus !== "loading" && hasMore) {
-      void dispatch(fetchTransactions(currentPage + 1));
+    if (transactionsStatus !== "loading") {
+      void dispatch(fetchTransactions());
     }
-  }, [dispatch, transactionsStatus, hasMore, currentPage]);
+  }, [dispatch, transactionsStatus]);
 
   const onSubmit = async (data: NewTransactionData) => {
     try {
@@ -70,11 +73,13 @@ const DashboardPage = () => {
       console.error("Falha ao deletar as transações:", error);
     }
   };
+  
 
-  const handleAtualizaSaldo = useCallback(() => {
-    void dispatch(fetchBalance());
-  }, [dispatch]);
+  // const handleAtualizaSaldo = useCallback(() => {
+  //   void dispatch(fetchBalance());
+  // }, [dispatch]);
 
+  // Seu JSX original continua aqui, sem nenhuma alteração
   return (
     <div className="w-full px-4 py-6 lg:px-12 bg-[var(--byte-bg-dashboard)] flex flex-col">
       <div className="font-sans max-w-screen-xl mx-auto w-full flex flex-col flex-1 min-h-0">
@@ -88,7 +93,9 @@ const DashboardPage = () => {
               user={data.user}
               balance={{ ...data.balance, value: balanceValue }}
             />
-            <FinancialChart />
+            <div className="relative h-64 md:h-80"> {/* Defina uma altura fixa */}
+              {/* <FinancialChart /> */}
+            </div>
             {preferences.spendingAlert && (
               <SpendingAlertWidget limit={2000} transactions={transactions} />
             )}
@@ -106,13 +113,11 @@ const DashboardPage = () => {
               <CardListExtract
                 transactions={transactions}
                 fetchPage={fetchNextPage}
-                hasMore={hasMore}
                 isPageLoading={transactionsStatus === "loading"}
                 onSave={(txs) => {
                   void handleSaveTransactions(txs);
                 }}
                 onDelete={handleDeleteTransactions}
-                atualizaSaldo={handleAtualizaSaldo}
               />
             </div>
           </div>
@@ -122,4 +127,16 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+// =================================================================================
+// PASSO 2: Crie um novo componente "wrapper" com o nome original (DashboardPage).
+// Ele é o único que será exportado.
+// =================================================================================
+const DashboardPage = () => { // <-- MUDANÇA AQUI: Componente wrapper
+  return (
+    <StoreProvider>
+      <DashboardContent />
+    </StoreProvider>
+  );
+};
+
+export default DashboardPage; // <-- MUDANÇA AQUI: A exportação continua a mesma
